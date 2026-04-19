@@ -37,15 +37,15 @@ web-server/
 
 ## 一、HTTP 与 WebSocket 对比
 
-|| 特性 | HTTP | WebSocket |
-||------|------|-----------|
-|| 通信模式 | 请求-响应（客户端主动，服务端被动） | 全双工（双方随时可发） |
-|| 连接生命周期 | 短连接（HTTP/1.0）/ Keep-Alive（HTTP/1.1） | 持久连接，直到主动关闭 |
-|| 握手 | TCP 三次握手即可 | TCP 握手 + HTTP Upgrade 握手 |
-|| 数据格式 | 请求行/状态行 + Header + Body | 二进制帧格式（opcode 区分文本/二进制/关闭等） |
-|| 状态 | 无状态（每次请求独立） | 有状态（连接保持） |
-|| 服务端能否主动推送 | 不能（只能被动响应） | 可以（全双工） |
-|| 典型场景 | 请求资源、提交表单、API 调用 | 实时推送、聊天、进度反馈、协同编辑 |
+| 特性 | HTTP | WebSocket |
+|------|------|-----------|
+| 通信模式 | 请求-响应（客户端主动，服务端被动） | 全双工（双方随时可发） |
+| 连接生命周期 | 短连接（HTTP/1.0）/ Keep-Alive（HTTP/1.1） | 持久连接，直到主动关闭 |
+| 握手 | TCP 三次握手即可 | TCP 握手 + HTTP Upgrade 握手 |
+| 数据格式 | 请求行/状态行 + Header + Body | 二进制帧格式（opcode 区分文本/二进制/关闭等） |
+| 状态 | 无状态（每次请求独立） | 有状态（连接保持） |
+| 服务端能否主动推送 | 不能（只能被动响应） | 可以（全双工） |
+| 典型场景 | 请求资源、提交表单、API 调用 | 实时推送、聊天、进度反馈、协同编辑 |
 
 > **关键区别**：WebSocket 握手完成后，同一条 TCP 连接**不再使用 HTTP 协议**，切换为 WebSocket 二进制帧格式通信。但浏览器仍可通过其他 TCP 连接发 HTTP 请求，两者互不干扰。
 
@@ -78,15 +78,15 @@ web-server/
 
 ### 2.3 常见 HTTP 方法 (CRUD)
 
-|| 方法 | 用途 | 是否有请求体 | 是否幂等 | 对应 SQL |
-||------|------|-------------|---------|----------|
-|| GET | 获取资源 | 无 | 是 | SELECT |
-|| POST | 提交数据/创建资源 | 有 | 否 | INSERT |
-|| PUT | **完整替换**资源 | 有 | 是 | UPDATE(整行) |
-|| PATCH | **部分更新**资源 | 有 | 否 | UPDATE(部分字段) |
-|| DELETE | 删除资源 | 可选 | 是 | DELETE |
-|| HEAD | 只获取响应头，不返回体 | 无 | 是 | - |
-|| OPTIONS | 查询支持的HTTP方法 | 无 | 是 | - |
+| 方法 | 用途 | 是否有请求体 | 是否幂等 | 对应 SQL |
+|------|------|-------------|---------|----------|
+| GET | 获取资源 | 无 | 是 | SELECT |
+| POST | 提交数据/创建资源 | 有 | 否 | INSERT |
+| PUT | **完整替换**资源 | 有 | 是 | UPDATE(整行) |
+| PATCH | **部分更新**资源 | 有 | 否 | UPDATE(部分字段) |
+| DELETE | 删除资源 | 可选 | 是 | DELETE |
+| HEAD | 只获取响应头，不返回体 | 无 | 是 | - |
+| OPTIONS | 查询支持的HTTP方法 | 无 | 是 | - |
 
 > **PUT vs PATCH 的区别**：PUT 必须传完整字段，未传的字段会被清空；PATCH 只改传入的字段，其他保留不变。
 
@@ -94,41 +94,41 @@ web-server/
 
 #### 2xx 成功
 
-|| 状态码 | 含义 | 典型场景 |
-||--------|------|---------|
-|| 200 | OK | 请求成功 |
-|| 201 | Created | POST 创建资源成功 |
-|| 204 | No Content | DELETE/PUT 成功但无内容需返回 |
+| 状态码 | 含义 | 典型场景 |
+|--------|------|---------|
+| 200 | OK | 请求成功 |
+| 201 | Created | POST 创建资源成功 |
+| 204 | No Content | DELETE/PUT 成功但无内容需返回 |
 
 #### 3xx 重定向 & 缓存
 
-|| 状态码 | 含义 | 浏览器行为 |
-||--------|------|----------|
-|| 301 | Moved Permanently | 永久跳转到 Location 地址，下次直接访问新地址 |
-|| 302 | Found | 临时跳转到 Location 地址 |
-|| 304 | Not Modified | 使用本地缓存 |
+| 状态码 | 含义 | 浏览器行为 |
+|--------|------|----------|
+| 301 | Moved Permanently | 永久跳转到 Location 地址，下次直接访问新地址 |
+| 302 | Found | 临时跳转到 Location 地址 |
+| 304 | Not Modified | 使用本地缓存 |
 
 > **301 vs 302**：搜索引擎对 301 会更新索引 URL，对 302 不会。
 
 #### 4xx 客户端错误
 
-|| 状态码 | 含义 | 浏览器行为 |
-||--------|------|----------|
-|| 400 | Bad Request | 请求格式错误 |
-|| 401 | Unauthorized | **弹出登录框**（可重试） |
-|| 403 | Forbidden | 直接拒绝（**不弹登录框**） |
-|| 404 | Not Found | 资源不存在 |
-|| 405 | Method Not Allowed | 该路径不支持此方法 |
+| 状态码 | 含义 | 浏览器行为 |
+|--------|------|----------|
+| 400 | Bad Request | 请求格式错误 |
+| 401 | Unauthorized | **弹出登录框**（可重试） |
+| 403 | Forbidden | 直接拒绝（**不弹登录框**） |
+| 404 | Not Found | 资源不存在 |
+| 405 | Method Not Allowed | 该路径不支持此方法 |
 
 > **401 vs 403**：401 = "我不知道你是谁，请登录"；403 = "我知道你是谁，但你没权限"。
 
 #### 5xx 服务端错误
 
-|| 状态码 | 含义 |
-||--------|------|
-|| 500 | Internal Server Error | 服务端代码出错了 |
-|| 502 | Bad Gateway | 网关/代理后端挂了 |
-|| 503 | Service Unavailable | 服务暂时不可用（维护中） |
+| 状态码 | 含义 |
+|--------|------|
+| 500 | Internal Server Error | 服务端代码出错了 |
+| 502 | Bad Gateway | 网关/代理后端挂了 |
+| 503 | Service Unavailable | 服务暂时不可用（维护中） |
 
 > **状态码由 RFC 标准规定，不能随意自定义**。每个状态码有固定含义，浏览器会根据不同状态码执行内置行为。
 
@@ -138,52 +138,52 @@ web-server/
 
 ### 3.1 GET 路由
 
-|| 路径 | 功能说明 | Content-Type | 状态码 |
-||------|---------|-------------|--------|
-|| `/` | 返回首页 HTML (`upload.html`) | text/html | 200 |
-|| `/query` | JSON API，返回服务器用户名 | application/json | 200 |
-|| `/logs` | 返回完整的 HTTP 报文日志内容 | text/plain | 200 |
-|| `/items` | 返回所有物品列表 (JSON 数组) | application/json | 200 |
-|| `/items/{id}` | 返回单个物品详情（ID 不存在则 404） | application/json | 200 / 404 |
-|| `/redirect/301` | **301 永久重定向**到 `/items` | - | 301 + Location 头 |
-|| `/redirect/302` | **302 临时重定向**到 `/items` | - | 302 + Location 头 |
-|| `/cache` | **缓存演示**：判断 If-None-Match，返回 304 或带 ETag 的 200 | application/json | 304 / 200 |
-|| `/auth` | **认证演示**：检查 Authorization 头 | application/json | 200 / 401 |
-|| `/forbidden` | **403 Forbidden 演示** | application/json | 403 |
-|| `/error/500` | **500 错误演示** | - | 500 |
-|| `/cookie/set` | **设置 Cookie**：Set-Cookie 写入 session_id | application/json | 200 |
-|| `/cookie/get` | **读取 Cookie**：从请求头读取并返回 | application/json | 200 |
-|| `/cookie/clear` | **清除 Cookie**：Max-Age=0 删除 | application/json | 200 |
-|| `/uploads` 或 `/uploads/` | **扫描文件夹**：返回所有图片的 base64 数据列表 | application/json | 200 |
-|| `/uploads/{filename}` | **单张图片访问**（支持中文 URL 编码解码） | image/* | 200 / 404 |
-|| `*.js` | **静态资源**：JavaScript 文件 | application/javascript | 200 |
-|| `*.css` | **静态资源**：CSS 样式表 | text/css | 200 |
-|| *(其他)* | 兜底 404 | - | 404 |
+| 路径 | 功能说明 | Content-Type | 状态码 |
+|------|---------|-------------|--------|
+| `/` | 返回首页 HTML (`upload.html`) | text/html | 200 |
+| `/query` | JSON API，返回服务器用户名 | application/json | 200 |
+| `/logs` | 返回完整的 HTTP 报文日志内容 | text/plain | 200 |
+| `/items` | 返回所有物品列表 (JSON 数组) | application/json | 200 |
+| `/items/{id}` | 返回单个物品详情（ID 不存在则 404） | application/json | 200 / 404 |
+| `/redirect/301` | **301 永久重定向**到 `/items` | - | 301 + Location 头 |
+| `/redirect/302` | **302 临时重定向**到 `/items` | - | 302 + Location 头 |
+| `/cache` | **缓存演示**：判断 If-None-Match，返回 304 或带 ETag 的 200 | application/json | 304 / 200 |
+| `/auth` | **认证演示**：检查 Authorization 头 | application/json | 200 / 401 |
+| `/forbidden` | **403 Forbidden 演示** | application/json | 403 |
+| `/error/500` | **500 错误演示** | - | 500 |
+| `/cookie/set` | **设置 Cookie**：Set-Cookie 写入 session_id | application/json | 200 |
+| `/cookie/get` | **读取 Cookie**：从请求头读取并返回 | application/json | 200 |
+| `/cookie/clear` | **清除 Cookie**：Max-Age=0 删除 | application/json | 200 |
+| `/uploads` 或 `/uploads/` | **扫描文件夹**：返回所有图片的 base64 数据列表 | application/json | 200 |
+| `/uploads/{filename}` | **单张图片访问**（支持中文 URL 编码解码） | image/* | 200 / 404 |
+| `*.js` | **静态资源**：JavaScript 文件 | application/javascript | 200 |
+| `*.css` | **静态资源**：CSS 样式表 | text/css | 200 |
+| *(其他)* | 兜底 404 | - | 404 |
 
 ### 3.2 POST 路由
 
-|| 路径 | 功能说明 | Content-Type | 状态码 |
-||------|---------|-------------|--------|
-|| `/upload` | **文件上传**：multipart/form-data → 保存到 uploads/ | multipart/form-data | 200 |
-|| `/items` | **创建物品**：JSON body → 自增 ID → 写入 items.json | application/json | 201 |
-|| `/log/clear` | **清空日志文件** `http_log.txt` | - | 200 |
-|| `/form` | **普通表单提交**：x-www-form-urlencoded 解析 | x-www-form-urlencoded | 200 |
-|| *(其他)* | 兜底 405 | - | 405 |
+| 路径 | 功能说明 | Content-Type | 状态码 |
+|------|---------|-------------|--------|
+| `/upload` | **文件上传**：multipart/form-data → 保存到 uploads/ | multipart/form-data | 200 |
+| `/items` | **创建物品**：JSON body → 自增 ID → 写入 items.json | application/json | 201 |
+| `/log/clear` | **清空日志文件** `http_log.txt` | - | 200 |
+| `/form` | **普通表单提交**：x-www-form-urlencoded 解析 | x-www-form-urlencoded | 200 |
+| *(其他)* | 兜底 405 | - | 405 |
 
 ### 3.3 PUT / PATCH / DELETE 路由
 
-|| 方法 | 路径 | 功能说明 | 状态码 |
-||------|------|---------|--------|
-|| PUT | `/items/{id}` | **整体替换**：必须传 name+price，未传字段被覆盖 | 200 / 404 |
-|| PATCH | `/items/{id}` | **部分更新**：只更新传入的字段 | 200 / 404 |
-|| DELETE | `/items/{id}` | **删除**：移除并持久化到 items.json | 200 / 404 |
+| 方法 | 路径 | 功能说明 | 状态码 |
+|------|------|---------|--------|
+| PUT | `/items/{id}` | **整体替换**：必须传 name+price，未传字段被覆盖 | 200 / 404 |
+| PATCH | `/items/{id}` | **部分更新**：只更新传入的字段 | 200 / 404 |
+| DELETE | `/items/{id}` | **删除**：移除并持久化到 items.json | 200 / 404 |
 
 ### 3.4 OPTIONS / HEAD 路由
 
-|| 方法 | 说明 |
-||------|------|
-|| OPTIONS * | CORS 预检处理，返回 204 + 允许的头 |
-|| HEAD `/` | 仅返回首页响应头，**无响应体** |
+| 方法 | 说明 |
+|------|------|
+| OPTIONS * | CORS 预检处理，返回 204 + 允许的头 |
+| HEAD `/` | 仅返回首页响应头，**无响应体** |
 
 ### 3.5 数据持久化
 
@@ -200,15 +200,15 @@ web-server/
 
 告诉对方 body 的格式是什么，应该怎么解析。
 
-|| 值 | 用途 | 解析方式 |
-||---|---|---|
-|| `text/html` | HTML 页面 | 浏览器渲染为网页 |
-|| `text/css` | CSS 样式 | 浏览器应用样式 |
-|| `application/javascript` | JS 脚本 | 浏览器执行脚本 |
-|| `application/json` | JSON 数据 | `json.loads()` 解析 |
-|| `multipart/form-data` | 多部分表单（含文件） | 按 boundary 分割解析 |
-|| `application/x-www-form-urlencoded` | 键值对表单 | 按 `&` 和 `=` 分割解析 |
-|| `image/png` | PNG 图片 | 显示图片 |
+| 值 | 用途 | 解析方式 |
+|---|---|---|
+| `text/html` | HTML 页面 | 浏览器渲染为网页 |
+| `text/css` | CSS 样式 | 浏览器应用样式 |
+| `application/javascript` | JS 脚本 | 浏览器执行脚本 |
+| `application/json` | JSON 数据 | `json.loads()` 解析 |
+| `multipart/form-data` | 多部分表单（含文件） | 按 boundary 分割解析 |
+| `application/x-www-form-urlencoded` | 键值对表单 | 按 `&` 和 `=` 分割解析 |
+| `image/png` | PNG 图片 | 显示图片 |
 
 > **类比**：寄快递标注"易碎品/食品/文件"，收件人知道怎么处理。
 
@@ -230,12 +230,12 @@ Cookie 是服务端通过响应头发给浏览器的一小段数据，浏览器�
   → 浏览器删除这张通行证
 ```
 
-|| 属性 | 说明 | 示例 |
-||------|------|------|
-|| `Path=/` | 在哪些路径下生效 | `Path=/admin` 只在 /admin 下发送 |
-|| `HttpOnly` | 防 XSS 攻击（JS 无法读取） | 安全建议开启 |
-|| `Max-Age=3600` | 有效期（秒） | 过期后浏览器自动删除 |
-|| `Secure` | 仅 HTTPS 传输 | 生产环境建议开启 |
+| 属性 | 说明 | 示例 |
+|------|------|------|
+| `Path=/` | 在哪些路径下生效 | `Path=/admin` 只在 /admin 下发送 |
+| `HttpOnly` | 防 XSS 攻击（JS 无法读取） | 安全建议开启 |
+| `Max-Age=3600` | 有效期（秒） | 过期后浏览器自动删除 |
+| `Secure` | 仅 HTTPS 传输 | 生产环境建议开启 |
 
 > **类比**：超市会员卡——办卡(`Set-Cookie`)→购物出示(`Cookie`)→过期作废(`Max-Age=0`)。
 
@@ -253,28 +253,32 @@ Cookie 是服务端通过响应头发给浏览器的一小段数据，浏览器�
   → 200 OK             ← "确认身份，放行"
 ```
 
-|| 格式 | 写法 | 安全性 | 使用场景 |
-||------|------|--------|---------|
-|| Bearer Token | `Bearer xxxxxx` | 较高 | JWT、OAuth2（现代主流） |
-|| Basic Auth | `Base64(用户名:密码)` | 低 | 简单内部系统 |
+| 格式 | 写法 | 安全性 | 使用场景 |
+|------|------|--------|---------|
+| Bearer Token | `Bearer xxxxxx` | 较高 | JWT、OAuth2（现代主流） |
+| Basic Auth | `Base64(用户名:密码)` | 低 | 简单内部系统 |
 
 ### 4.4 其他常见头
 
-|| 请求头 | 说明 |
-||--------|------|
-|| Host | 目标主机名+端口 |
-|| User-Agent | 客户端标识 |
-|| Accept | 可接受的响应类型 |
-|| Content-Length | 请求体字节长度 |
-|| Connection | 连接管理 (keep-alive) |
-|| Origin | 请求来源（跨域时） |
+**请求头**
 
-|| 响应头 | 说明 |
-||--------|------|
-|| Location | 重定向目标地址 |
-|| ETag | 资源版本标识（配合 304 缓存） |
-|| Cache-Control | 缓存策略 |
-|| Access-Control-Allow-Origin | CORS 允许的源 |
+| 请求头 | 说明 |
+|--------|------|
+| Host | 目标主机名+端口 |
+| User-Agent | 客户端标识 |
+| Accept | 可接受的响应类型 |
+| Content-Length | 请求体字节长度 |
+| Connection | 连接管理 (keep-alive) |
+| Origin | 请求来源（跨域时） |
+
+**响应头**
+
+| 响应头 | 说明 |
+|--------|------|
+| Location | 重定向目标地址 |
+| ETag | 资源版本标识（配合 304 缓存） |
+| Cache-Control | 缓存策略 |
+| Access-Control-Allow-Origin | CORS 允许的源 |
 
 ---
 
@@ -383,14 +387,14 @@ Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOko=
 + - - - - - - - - - - - - - - - - - - - - - - - - - - +
 ```
 
-|| 字段 | 位数 | 说明 |
-||------|------|------|
-|| FIN | 1 bit | 1=消息最后一帧，0=后续还有帧 |
-|| Opcode | 4 bit | 1=text, 2=binary, 8=close, 9=ping, 10=pong |
-|| MASK | 1 bit | 1=客户端帧（必须掩码），0=服务端帧 |
-|| Payload len | 7 bit | 0-125=实际长度，126=2字节扩展，127=8字节扩展 |
-|| Masking-Key | 0/4 byte | 仅 MASK=1 时存在 |
-|| Payload Data | 变长 | 实际数据（MASK=1 时需 XOR 解掩码）|
+| 字段 | 位数 | 说明 |
+|------|------|------|
+| FIN | 1 bit | 1=消息最后一帧，0=后续还有帧 |
+| Opcode | 4 bit | 1=text, 2=binary, 8=close, 9=ping, 10=pong |
+| MASK | 1 bit | 1=客户端帧（必须掩码），0=服务端帧 |
+| Payload len | 7 bit | 0-125=实际长度，126=2字节扩展，127=8字节扩展 |
+| Masking-Key | 0/4 byte | 仅 MASK=1 时存在 |
+| Payload Data | 变长 | 实际数据（MASK=1 时需 XOR 解掩码）|
 
 ### 7.3 掩码算法（RFC 强制要求）
 
@@ -402,11 +406,11 @@ for i in range(len(payload)):
 
 ### 7.4 多端口共存架构
 
-|| | HTTP 服务器 | WebSocket 服务器 |
-||---|---|---|
-|| 端口 | 8080 | 8765 |
-|| 协议 | 始终是 HTTP | 握手后变为 WS 帧 |
-|| 用途 | 页面/API/上传/静态资源 | 实时进度推送 |
+| | HTTP 服务器 | WebSocket 服务器 |
+|---|---|---|
+| 端口 | 8080 | 8765 |
+| 协议 | 始终是 HTTP | 握手后变为 WS 帧 |
+| 用途 | 页面/API/上传/静态资源 | 实时进度推送 |
 
 > 两者是独立的 TCP 连接，互不干扰。
 
@@ -433,12 +437,12 @@ for i in range(len(payload)):
 
 ## 九、HTTP 版本演进
 
-|| 版本 | 特点 |
-||------|------|
-|| HTTP/1.0 | 每次请求新建 TCP 连接，完事断开 |
-|| HTTP/1.1 | 默认 Keep-Alive 长连接，管道化（队头阻塞） |
-|| HTTP/2 | 多路复用（一个连接并行多请求），头部压缩，服务端推送 |
-|| HTTP/3 | 基于 QUIC(UDP)，彻底解决队头阻塞，0-RTT 建连 |
+| 版本 | 特点 |
+|------|------|
+| HTTP/1.0 | 每次请求新建 TCP 连接，完事断开 |
+| HTTP/1.1 | 默认 Keep-Alive 长连接，管道化（队头阻塞） |
+| HTTP/2 | 多路复用（一个连接并行多请求），头部压缩，服务端推送 |
+| HTTP/3 | 基于 QUIC(UDP)，彻底解决队头阻塞，0-RTT 建连 |
 
 ---
 
