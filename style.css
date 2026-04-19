@@ -221,3 +221,53 @@ button:disabled { background: #aaa; cursor: not-allowed; }
     word-break: break-all;
 }
 .timestamp { color: #6c7086; font-size: 11px; margin-right: 6px; }
+
+/* ========== 图片预览卡片 ========== */
+.img-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+}
+.img-card img {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.15s, border-color 0.15s;
+}
+.img-card img:hover {
+    transform: scale(1.05);
+    border-color: #1976d2;
+}
+.img-info { flex: 1; min-width: 0; }
+.img-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #1976d2;
+    word-break: break-all;
+    margin-bottom: 4px;
+}
+.img-meta {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 10px;
+}
+.img-btns { display: flex; gap: 8px; }
+.img-btn {
+    padding: 5px 14px;
+    font-size: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #fff;
+    color: #333;
+    transition: background 0.15s;
+}
+.img-btn:hover { background: #e3f2fd; border-color: #1976d2; }

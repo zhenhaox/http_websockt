@@ -137,7 +137,7 @@ function explainWsFrame(raw, direction) {
 // ========== 通用 API 调用（带报文拦截） ==========
 
 async function apiRequest(method, url, options = {}) {
-    const { body, headers: customHeaders, resultEl } = options;
+    const { body, headers: customHeaders, resultEl, rawResponse } = options;
 
     // 构造完整的请求报文（模拟浏览器实际发送的所有头）
     let reqText = `${method} ${url} HTTP/1.1\n`;
@@ -186,6 +186,15 @@ async function apiRequest(method, url, options = {}) {
         // 构造响应报文文本（完整输出）
         let resText = `HTTP/1.1 ${resp.status} ${resp.statusText}\n`;
         resp.headers.forEach((v, k) => { resText += `${k}: ${v}\n`; });
+        
+        // 如果需要原始 response（用于图片等二进制数据），不读 body 为 text
+        if (rawResponse) {
+            const contentLength = resp.headers.get('Content-Length');
+            resText += `\n[响应体: ${contentLength ? contentLength + ' 字节' : '二进制数据'} - 已跳过文本读取，返回原始 Response]`;
+            addLog(httpPanel, 'RES', 'res', resText);
+            return { resp, body: null };
+        }
+        
         const respBody = await resp.text();
         if (respBody) {
             resText += `\n[响应体共 ${respBody.length} 字节]\n${respBody}`;
@@ -358,10 +367,85 @@ async function apiCorsDemo() {
 }
 
 // ========== 静态资源加载 ==========
-async function loadImage() {
+// 客户端只发 GET /uploads/，服务端自动扫描文件夹，一次返回所有图片的 base64 数据
+async function loadAllImages() {
     const el = document.getElementById('staticResult');
-    el.textContent = '请求 /uploads/ 目录中的图片...';
-    await apiRequest('GET', '/uploads/', { resultEl: 'staticResult' });
+    el.textContent = '正在请求服务端扫描 uploads 文件夹...';
+    
+    try {
+        // 1 次请求拿到所有图片
+        const { resp, body: respBody } = await apiRequest('GET', '/uploads/', { resultEl: null });
+        
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
+        const data = JSON.parse(respBody);
+        if (!data.images || data.images.length === 0) {
+            el.innerHTML = 'uploads 目录为空，请先上传一张图片';
+            return;
+        }
+        
+        // 构建图片预览（可点击页面内弹窗查看大图）
+        let galleryHtml = `<div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">`;
+        data.images.forEach((img, idx) => {
+            const imgId = `previewImg${idx}`;
+            galleryHtml += `
+                <div class="img-card">
+                    <img id="${imgId}" src="${img.data}" 
+                         onclick="showBigImage(this,'${img.name}')"
+                         title="点击查看大图" />
+                    <div class="img-info">
+                        <div class="img-name">${img.name}</div>
+                        <div class="img-meta">${(img.size / 1024).toFixed(1)} KB · ${img.mime.split('/')[1].toUpperCase()}</div>
+                        <div class="img-btns">
+                            <button onclick="downloadImage('${img.data}','${img.name}')" class="img-btn">⬇ 下载</button>
+                            <button onclick="showBigImage(document.getElementById('${imgId}'),'${img.name}')" class="img-btn">🔍 查看大图</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        galleryHtml += '</div>';
+        el.innerHTML = `✅ 服务端返回 ${data.count} 张图片（1次请求搞定，无需关心文件名格式）${galleryHtml}`;
+    } catch (err) {
+        el.innerHTML = `❌ 加载失败: ${err.message}`;
+    }
+}
+
+// ========== 图片大图弹窗 ==========
+function showBigImage(imgEl, fileName) {
+    // 创建遮罩层
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    
+    // 大图
+    const bigImg = document.createElement('img');
+    bigImg.src = imgEl.src;
+    bigImg.style.cssText = 'max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,0.5);';
+    
+    // 文件名
+    const label = document.createElement('div');
+    label.textContent = fileName;
+    label.style.cssText = 'position:absolute;bottom:20px;color:#fff;font-size:14px;background:rgba(0,0,0,0.6);padding:6px 16px;border-radius:20px;';
+    
+    // 提示
+    const hint = document.createElement('div');
+    hint.textContent = '点击任意位置关闭';
+    hint.style.cssText = 'position:absolute;top:16px;color:#aaa;font-size:12px;';
+    
+    overlay.appendChild(bigImg);
+    overlay.appendChild(label);
+    overlay.appendChild(hint);
+    
+    // 点击关闭
+    overlay.addEventListener('click', () => document.body.removeChild(overlay));
+    document.body.appendChild(overlay);
+}
+
+// ========== 下载图片 ==========
+function downloadImage(dataUrl, fileName) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = fileName;
+    link.click();
 }
 
 // ========== 图片上传 ==========

@@ -18,6 +18,27 @@ import threading
 # 存储所有连接的客户端
 connected_clients = set()
 
+# ========== 持久化日志 ==========
+LOG_FILE = "http_log.txt"
+log_lock = threading.Lock()  # 日志文件写入锁
+
+
+def write_to_log(text):
+    """线程安全地将文本追加到日志文件"""
+    with log_lock:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(text + "\n")
+
+
+def clear_log():
+    """清空日志文件（每次重启服务器可选调用）"""
+    with open(LOG_FILE, "w", encoding="utf-8") as f:
+        f.write("")
+
+# 启动时清空旧日志（注释掉可保留历史记录）
+clear_log()
+print(f"📝 日志文件: {LOG_FILE}")
+
 # ========== 文件数据库 ==========
 ITEMS_FILE = "items.json"
 items_lock = threading.Lock()  # 文件读写锁，防止并发冲突
@@ -53,19 +74,28 @@ SEP = "═" * 70
 
 def log_http(direction, content):
     ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    print(f"\n╔{SEP}╗")
-    print(f"║ [{ts}] 📡 HTTP {direction}")
-    print(f"╚{SEP}╝")
-    print(content)
-    print(f"╔{SEP}╗\n")
+    block = (
+        f"\n╔{SEP}╗\n"
+        f"║ [{ts}] 📡 HTTP {direction}\n"
+        f"╚{SEP}╝\n"
+        f"{content}\n"
+        f"╠{'─' * 68}╣  ← 结束\n"
+    )
+    print(block)
+    write_to_log(block)
+
 
 def log_ws(direction, content):
     ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    print(f"\n╔{SEP}╗")
-    print(f"║ [{ts}] 🔌 WS {direction}")
-    print(f"╚{SEP}╝")
-    print(content)
-    print(f"╔{SEP}╗\n")
+    block = (
+        f"\n╔{SEP}╗\n"
+        f"║ [{ts}] 🔌 WS {direction}\n"
+        f"╚{SEP}╝\n"
+        f"{content}\n"
+        f"╠{'─' * 68}╣  ← 结束\n"
+    )
+    print(block)
+    write_to_log(block)
 
 # ==========================================================================
 # WebSocket 帧构造与解析 (RFC 6455)
@@ -382,6 +412,23 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/query":
             self._send_json(200, "OK", {"username": "zhenhao_server"})
 
+        # ---- 查看完整日志文件 (GET /logs) ----
+        elif self.path == "/logs":
+            if os.path.isfile(LOG_FILE):
+                with open(LOG_FILE, "r", encoding="utf-8") as f:
+                    log_content = f.read()
+                resp_headers = {
+                    "Content-Type": "text/plain; charset=utf-8",
+                    "Content-Length": str(len(log_content.encode("utf-8"))),
+                }
+                self.send_response(200)
+                for k, v in resp_headers.items():
+                    self.send_header(k, v)
+                self.end_headers()
+                self.wfile.write(log_content.encode("utf-8"))
+            else:
+                self._send_json(200, "OK", {"log": "(日志文件不存在)"})
+
         # ---- 资源列表 (GET /items) ----
         elif self.path == "/items":
             self._send_json(200, "OK", {"items": list(items.values())})
@@ -503,9 +550,35 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(result.encode("utf-8"))
             self._dump_response(200, "OK", resp_headers, result)
 
-        # ---- 上传文件访问 ----
+        # ---- 上传文件目录列表 + 图片数据 (GET /uploads/) ----
+        # 客户端发一次请求，服务端扫描文件夹，返回所有图片的 base64 数据
+        elif self.path == "/uploads/" or self.path == "/uploads":
+            import base64 as b64mod
+            upload_dir = "uploads"
+            images = []
+            if os.path.isdir(upload_dir):
+                img_exts = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                            ".gif": "image/gif", ".webp": "image/webp", ".bmp": "image/bmp"}
+                for f in sorted(os.listdir(upload_dir)):
+                    full_path = os.path.join(upload_dir, f)
+                    ext = os.path.splitext(f)[1].lower()
+                    if os.path.isfile(full_path) and ext in img_exts:
+                        with open(full_path, "rb") as img_file:
+                            img_b64 = b64mod.b64encode(img_file.read()).decode("utf-8")
+                        images.append({
+                            "name": f,
+                            "size": os.path.getsize(full_path),
+                            "mime": img_exts[ext],
+                            "data": f"data:{img_exts[ext]};base64,{img_b64}",
+                        })
+            self._send_json(200, "OK", {"images": images, "count": len(images)})
+
+        # ---- 上传单个文件访问 (保留，用于直接访问) ----
         elif self.path.startswith("/uploads/"):
-            file_path = os.path.join(".", self.path.lstrip("/"))
+            # URL 解码：浏览器发来的中文文件名是 %E4%BC%81... 编码，需解码回中文
+            from urllib.parse import unquote
+            decoded_path = unquote(self.path)
+            file_path = os.path.join(".", decoded_path.lstrip("/"))
             if os.path.isfile(file_path):
                 ext = os.path.splitext(file_path)[1].lower()
                 mime = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
@@ -581,21 +654,45 @@ class Handler(BaseHTTPRequestHandler):
             # 读取完整请求体用于日志展示
             raw_body = self._get_body() or self.rfile.read(content_length)
             if raw_body:
-                # 尝试文本解码，能解则全显示（如 urlencoded/JSON）
-                try:
-                    body_text = raw_body.decode("utf-8", errors="strict")
-                    req_lines.append(f"[请求体共 {content_length} 字节，以下为完整内容]")
+                req_lines.append(f"[请求体共 {content_length} 字节，multipart/form-data 结构解析]")
+                req_lines.append("")
+                # ===== 智能解析 multipart 结构 =====
+                boundary_str = boundary.decode("latin-1")
+                sep = b"--" + boundary
+                parts = raw_body.split(sep)
+                for i, part in enumerate(parts):
+                    if not part or part == b"--\r\n" or part == b"-\r\n" or part == b"--":
+                        if part == b"--\r\n":
+                            req_lines.append(f"═══ 结束边界: --{boundary_str}-- ═══")
+                        continue
+                    # 去掉开头的 \r\n
+                    if part.startswith(b"\r\n"):
+                        part = part[2:]
+                    # 找到 header 和 body 的分界 (\r\n\r\n)
+                    hdr_end = part.find(b"\r\n\r\n")
+                    if hdr_end == -1:
+                        continue
+                    part_headers = part[:hdr_end].decode("utf-8", errors="replace")
+                    part_data = part[hdr_end + 4:]
+                    
+                    # 判断是文件还是普通字段
+                    is_file = "filename=" in part_headers
+                    label = f"【Part {i}: {'📎 文件字段' if is_file else '📝 文本字段'}】"
+                    req_lines.append(label)
+                    for hl in part_headers.strip().split("\r\n"):
+                        req_lines.append(f"  {hl}")
+                    if is_file:
+                        # 文件：显示前 200 字节 hex + 总大小
+                        preview_bytes = min(len(part_data), 200)
+                        req_lines.append(f"  ── 文件数据: 共 {len(part_data)} 字节 ──")
+                        req_lines.append(f"  Hex (前 {preview_bytes} 字节): {part_data[:preview_bytes].hex(' ', 2)}")
+                        if len(part_data) > preview_bytes:
+                            req_lines.append(f"  ... (省略 {len(part_data) - preview_bytes} 字节二进制数据)")
+                    else:
+                        # 文本：直接显示内容
+                        text_val = part_data.decode("utf-8", errors="replace").strip()
+                        req_lines.append(f"  值: {text_val}")
                     req_lines.append("")
-                    req_lines.append(body_text)
-                except UnicodeDecodeError:
-                    # 二进制数据（如图文件）显示前 3000 字节 hex 预览
-                    preview_len = min(len(raw_body), 3000)
-                    preview = raw_body[:preview_len]
-                    req_lines.append(f"[请求体共 {content_length} 字节，二进制数据，以下为前 {preview_len} 字节 hex 预览]")
-                    req_lines.append("")
-                    req_lines.append(preview.hex(" ", 2))
-                    if content_length > preview_len:
-                        req_lines.append(f"... (省略 {content_length - preview_len} 字节二进制数据)")
             else:
                 req_lines.append(f"[请求体共 {content_length} 字节]")
             log_http("请求报文 ▶ 客户端 → 服务端", "\n".join(req_lines))
@@ -668,6 +765,11 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(201, "Created", new_item)
             except Exception:
                 self._send_json(400, "Bad Request", {"error": "JSON 格式错误"})
+
+        # ---- POST /log/clear (清空日志文件) ----
+        elif self.path == "/log/clear":
+            clear_log()
+            self._send_json(200, "OK", {"message": "日志已清空"})
 
         # ---- POST /form (x-www-form-urlencoded 表单提交) ----
         elif self.path == "/form":

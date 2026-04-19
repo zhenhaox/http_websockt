@@ -113,6 +113,16 @@
                 <button onclick="apiGet('/error/500')">500 Internal Server Error</button>
             </div>
         </div>
+
+        <!-- ==================== 日志查看 ==================== -->
+        <div class="card">
+            <h3>📂 服务端完整日志文件</h3>
+            <p class="desc">所有 HTTP/WS 报文自动记录到 http_log.txt，点击下载查看全部历史</p>
+            <div class="btn-group">
+                <button onclick="window.open('/logs','_blank')" style="background:#0d47a1;">📥 查看完整日志 (GET /logs)</button>
+                <button id="clearLogBtn" style="background:#b71c1c;" onclick="fetch('/log/clear',{method:'POST'}).then(()=>alert('日志已清空'))">🗑️ 清空服务端日志</button>
+            </div>
+        </div>
     </div>
 
     <!-- ==================== 请求头 / 响应头 ==================== -->
@@ -196,12 +206,12 @@
     <!-- ==================== 静态资源 ==================== -->
     <div class="section">
         <h2>📦 静态资源加载 <span class="badge http">多请求</span></h2>
-        <p class="desc">本页加载时，浏览器自动请求了 HTML、CSS、JS 三个文件，观察 HTTP 面板中的多条请求</p>
+        <p class="desc">页面加载时浏览器解析 HTML 后自动请求 CSS 和 JS 文件（共3个自动请求）。下方按钮可额外触发服务端扫描文件夹并返回所有图片（第4个手动请求）</p>
         <div class="card">
             <div class="btn-group">
-                <button onclick="loadImage()">加载图片 (GET /uploads/...)</button>
+                <button onclick="loadAllImages()">🖼️ 加载全部图片 (GET /uploads)</button>
             </div>
-            <div id="staticResult" class="result-box">页面加载时已自动请求: upload.html + style.css + app.js</div>
+            <div id="staticResult" class="result-box">等待点击按钮...</div>
         </div>
     </div>
 
