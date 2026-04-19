@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HTTP & WebSocket 知识演示平台</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>HTTP & WebSocket 知识演示平台</h1>
+    <p style="color:#666;margin-top:-10px;">每个功能对应 http.md 中的一个知识点，报文拦截面板实时展示请求/响应细节</p>
+
+    <!-- ==================== WebSocket 进度条 ==================== -->
+    <div class="section">
+        <h2>🔌 WebSocket 实时推送 <span class="badge ws">全双工</span></h2>
+        <p class="desc">WebSocket 握手完成后，服务端可主动推数据给浏览器（HTTP 做不到）</p>
+        <div class="demo-row">
+            <button id="startBtn" disabled>点击开始推送进度</button>
+            <div class="progress"><div class="bar" id="bar">0%</div></div>
+            <span id="tip" class="status">等待连接...</span>
+        </div>
+    </div>
+
+    <!-- ==================== HTTP 方法演示 ==================== -->
+    <div class="section">
+        <h2>📝 HTTP 方法 <span class="badge http">GET/POST/PUT/DELETE/PATCH/HEAD</span></h2>
+        <p class="desc">CRUD 操作分别对应不同 HTTP 方法，观察报文差异</p>
+
+        <div class="card">
+            <h3>资源管理 (RESTful 风格) — 自定义输入</h3>
+            <p class="desc">GET /items | POST /items | PUT /items/:id | PATCH /items/:id | DELETE /items/:id</p>
+
+            <!-- POST 创建 -->
+            <div style="margin-bottom:10px;">
+                <strong>POST 创建新物品</strong><br>
+                名称: <input type="text" id="postName" value="新书" placeholder="物品名称">
+                价格: <input type="text" id="postPrice" value="19.9" placeholder="价格(数字)">
+                <button onclick="apiPost('/items', {name:document.getElementById('postName').value, price:parseFloat(document.getElementById('postPrice').value)||0})">POST 创建</button>
+            </div>
+
+            <!-- PUT 替换 -->
+            <div style="margin-bottom:10px;">
+                <strong>PUT 完整替换</strong> (替换指定ID的全部字段)<br>
+                ID: <input type="text" id="putId" value="1" width="40">
+                名称: <input type="text" id="putName" value="高级笔记本" placeholder="新名称">
+                价格: <input type="text" id="putPrice" value="39.9" placeholder="新价格">
+                <button onclick="apiPut('/items/'+document.getElementById('putId').value, {name:document.getElementById('putName').value, price:parseFloat(document.getElementById('putPrice').value)||0})">PUT 替换</button>
+            </div>
+
+            <!-- PATCH 部分更新 -->
+            <div style="margin-bottom:10px;">
+                <strong>PATCH 部分更新</strong> (只改传入的字段，其他保留)<br>
+                ID: <input type="text" id="patchId" value="1">
+                名称: <input type="text" id="patchName" value="" placeholder="留空则不改名称">
+                价格: <input type="text" id="patchPrice" value="" placeholder="留空则不改价格">
+                <button onclick="doPatch()">PATCH 更新</button>
+            </div>
+
+            <!-- DELETE 删除 -->
+            <div style="margin-bottom:10px;">
+                <strong>DELETE 删除</strong><br>
+                ID: <input type="text" id="deleteId" value="3">
+                <button onclick="apiDelete('/items/'+document.getElementById('deleteId').value)">DELETE 删除</button>
+            </div>
+
+            <!-- GET 查询 -->
+            <div style="margin-bottom:10px;">
+                <strong>GET 查询</strong><br>
+                ID: <input type="text" id="getId" value="1"> (留空查全部)
+                <button onclick="apiGet('/items' + (document.getElementById('getId').value ? '/'+document.getElementById('getId').value : ''))">GET 查询</button>
+                <button onclick="apiHead('/' + (document.getElementById('getId').value || ''))">HEAD 查询头</button>
+            </div>
+
+            <div id="itemsResult" class="result-box">点击按钮查看结果</div>
+        </div>
+    </div>
+
+    <!-- ==================== 状态码演示 ==================== -->
+    <div class="section">
+        <h2>🔢 HTTP 状态码 <span class="badge http">200/301/401/403/404/500</span></h2>
+        <p class="desc">不同的状态码代表不同的含义，观察响应报文的差异</p>
+
+        <div class="card">
+            <h3>2xx 成功</h3>
+            <div class="btn-group">
+                <button onclick="apiGet('/items')">200 OK</button>
+                <button onclick="apiPost('/items', {name:'测试',price:1})">201 Created</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>3xx 重定向 & 缓存</h3>
+            <div class="btn-group">
+                <button onclick="apiGet('/redirect/301')">301 永久重定向</button>
+                <button onclick="apiGet('/redirect/302')">302 临时重定向</button>
+                <button onclick="apiGet('/cache')">304 缓存(第1次)</button>
+                <button onclick="apiGetCache()">304 缓存(第2次)</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>4xx 客户端错误</h3>
+            <div class="btn-group">
+                <button onclick="apiGet('/items/999')">404 Not Found</button>
+                <button onclick="apiGet('/auth')">401 Unauthorized</button>
+                <button onclick="apiGet('/forbidden')">403 Forbidden</button>
+                <button onclick="apiGet('/not-exist-page')">404 页面不存在</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>5xx 服务端错误</h3>
+            <div class="btn-group">
+                <button onclick="apiGet('/error/500')">500 Internal Server Error</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 请求头 / 响应头 ==================== -->
+    <div class="section">
+        <h2>📋 请求头 & 响应头 <span class="badge http">Content-Type / Cookie / Authorization</span></h2>
+
+        <div class="card">
+            <h3>Authorization 认证头</h3>
+            <p class="desc">不带认证 → 401 | 带 <code>Authorization: Bearer my-secret-token</code> → 200</p>
+            <div class="btn-group">
+                <button onclick="apiGet('/auth')">无认证访问</button>
+                <button onclick="apiGetAuth()">带 Bearer Token</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Content-Type 演示</h3>
+            <p class="desc">不同接口返回不同的 Content-Type</p>
+            <div class="btn-group">
+                <button onclick="apiGet('/')">text/html</button>
+                <button onclick="apiGet('/query')">application/json</button>
+                <button onclick="apiGet('/app.js')">application/javascript</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== Cookie ==================== -->
+    <div class="section">
+        <h2>🍪 Cookie <span class="badge http">Set-Cookie / Cookie</span></h2>
+        <p class="desc">服务端通过 <code>Set-Cookie</code> 响应头设置，浏览器后续请求自动带上 <code>Cookie</code> 头</p>
+        <div class="card">
+            <div class="btn-group">
+                <button onclick="apiGet('/cookie/set')">设置 Cookie</button>
+                <button onclick="apiGet('/cookie/get')">读取 Cookie</button>
+                <button onclick="apiGet('/cookie/clear')">清除 Cookie</button>
+            </div>
+            <div id="cookieResult" class="result-box">先点击"设置 Cookie"，再"读取 Cookie"查看效果</div>
+        </div>
+    </div>
+
+    <!-- ==================== 表单提交 ==================== -->
+    <div class="section">
+        <h2>📄 表单提交 <span class="badge http">multipart / urlencoded</span></h2>
+
+        <div class="card">
+            <h3>multipart/form-data (文件上传)</h3>
+            <p class="desc">Content-Type: multipart/form-data; boundary=xxx，适合传文件</p>
+            <div id="dropZone" class="drop-zone">
+                <span style="font-size:32px;">📁</span>
+                <span>拖拽图片到此处，或点击选择文件</span>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;">
+            </div>
+            <div id="previewArea" style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;"></div>
+            <p id="uploadTip" class="status"></p>
+        </div>
+
+        <div class="card">
+            <h3>application/x-www-form-urlencoded (普通表单)</h3>
+            <p class="desc">Content-Type: application/x-www-form-urlencoded，键值对格式: name=xxx&age=18</p>
+            <div class="form-row">
+                <input type="text" id="formName" placeholder="姓名" value="zhenhao">
+                <input type="text" id="formAge" placeholder="年龄" value="20">
+                <button onclick="submitForm()">提交表单</button>
+            </div>
+            <div id="formResult" class="result-box"></div>
+        </div>
+    </div>
+
+    <!-- ==================== CORS ==================== -->
+    <div class="section">
+        <h2>🌐 CORS 跨域 <span class="badge http">OPTIONS 预检</span></h2>
+        <p class="desc">跨域请求时，浏览器先发 OPTIONS 预检，服务端返回 <code>Access-Control-Allow-*</code> 头</p>
+        <div class="card">
+            <div class="btn-group">
+                <button onclick="apiCorsDemo()">发送跨域 PUT 请求（带自定义头）</button>
+            </div>
+            <div id="corsResult" class="result-box">点击按钮，观察 HTTP 面板中是否先出现 OPTIONS 请求</div>
+        </div>
+    </div>
+
+    <!-- ==================== 静态资源 ==================== -->
+    <div class="section">
+        <h2>📦 静态资源加载 <span class="badge http">多请求</span></h2>
+        <p class="desc">本页加载时，浏览器自动请求了 HTML、CSS、JS 三个文件，观察 HTTP 面板中的多条请求</p>
+        <div class="card">
+            <div class="btn-group">
+                <button onclick="loadImage()">加载图片 (GET /uploads/...)</button>
+            </div>
+            <div id="staticResult" class="result-box">页面加载时已自动请求: upload.html + style.css + app.js</div>
+        </div>
+    </div>
+
+    <!-- ==================== 报文拦截面板 ==================== -->
+    <div class="panel-container">
+        <div class="panel">
+            <div class="panel-header http">
+                <span>📡 HTTP 报文</span>
+                <button class="clear-btn" onclick="clearPanel('http')">清空</button>
+            </div>
+            <div class="panel-body" id="httpPanel"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-header ws">
+                <span>🔌 WebSocket 帧</span>
+                <button class="clear-btn" onclick="clearPanel('ws')">清空</button>
+            </div>
+            <div class="panel-body" id="wsPanel"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

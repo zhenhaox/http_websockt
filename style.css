@@ -1,0 +1,223 @@
+/* ==================== 全局样式 ==================== */
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 20px;
+    background: #f5f5f5;
+    color: #333;
+}
+h1 { margin-bottom: 4px; }
+h2 { color: #333; font-size: 18px; margin-bottom: 6px; }
+h3 { font-size: 15px; margin: 0 0 8px 0; color: #444; }
+
+/* ==================== 标签 ==================== */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    vertical-align: middle;
+}
+.badge.http { background: #e65100; color: #fff; }
+.badge.ws   { background: #6a1b9a; color: #fff; }
+
+/* ==================== 区域 ==================== */
+.section {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.desc {
+    font-size: 13px;
+    color: #666;
+    margin: 4px 0 10px 0;
+}
+.desc code {
+    background: #f0f0f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #c62828;
+}
+.status {
+    font-size: 13px;
+    color: #888;
+}
+
+/* ==================== 卡片 ==================== */
+.card {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+}
+
+/* ==================== 按钮 ==================== */
+button {
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    background: #1976d2;
+    color: white;
+    transition: background 0.15s;
+}
+button:hover { background: #1565c0; }
+button:disabled { background: #aaa; cursor: not-allowed; }
+.btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ==================== 进度条 ==================== */
+.demo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+.progress {
+    width: 400px;
+    height: 24px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    background: #fff;
+    flex-shrink: 0;
+}
+.bar {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+    transition: width 0.1s linear;
+    text-align: center;
+    color: white;
+    line-height: 24px;
+    font-size: 12px;
+}
+
+/* ==================== 表单 ==================== */
+.form-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+}
+.form-row input {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+    width: 120px;
+}
+
+/* ==================== 拖拽上传 ==================== */
+.drop-zone {
+    width: 100%;
+    max-width: 500px;
+    height: 120px;
+    border: 2px dashed #bbb;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: #fff;
+    color: #888;
+    font-size: 14px;
+}
+
+/* ==================== 结果框 ==================== */
+.result-box {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Consolas', monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+    min-height: 20px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ==================== 报文面板 ==================== */
+.panel-container {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+.panel {
+    flex: 1;
+    min-width: 380px;
+    background: #1e1e2e;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 13px;
+}
+.panel-header {
+    padding: 8px 14px;
+    font-weight: bold;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.panel-header.http { background: #e65100; }
+.panel-header.ws   { background: #6a1b9a; }
+.panel-body {
+    max-height: 2000px;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 10px 14px;
+    color: #cdd6f4;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre;
+    word-break: break-all;
+}
+.panel-body .tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-right: 6px;
+}
+.tag.req   { background: #f38ba8; color: #1e1e2e; }
+.tag.res   { background: #a6e3a1; color: #1e1e2e; }
+.tag.send  { background: #89b4fa; color: #1e1e2e; }
+.tag.recv  { background: #f9e2af; color: #1e1e2e; }
+.tag.open  { background: #94e2d5; color: #1e1e2e; }
+.tag.close { background: #bac2de; color: #1e1e2e; }
+.clear-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.clear-btn:hover { background: rgba(255,255,255,0.15); }
+
+.detail-box {
+    background: #313244;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin: 6px 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.timestamp { color: #6c7086; font-size: 11px; margin-right: 6px; }
